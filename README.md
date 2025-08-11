@@ -13,7 +13,7 @@ A unified MCP (Model Context Protocol) architecture implementation that provides
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │   Web Browser   │     │    OpenWebUI    │     │    AI Agent     │
-│   (React/TS)    │     │  (Chat Interface)│     │ (Claude/GPT)    │
+│   (React/TS)    │     │ (Chat Interface)│     │ (Claude/GPT)    │
 └────────┬────────┘     └────────┬────────┘     └────────┬────────┘
          │                       │                         │
          │ HTTP/REST             │ HTTP/REST               │ MCP
