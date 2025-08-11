@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "task-management": {
+      "command": "python",
+      "args": ["mcp-server/mcp_server_stdio.py"],
+      "env": {
+        "BACKEND_API_URL": "http://backend:8001"
+      },
+      "description": "Task Management MCP Server - Provides tools, resources, and prompts for task management operations"
+    }
+  }
+}

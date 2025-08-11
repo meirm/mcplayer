@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=sqlite:///tasks.db
+    volumes:
+      - backend_data:/app/data
+    networks:
+      - mcpo_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MCP Server with MCPO Proxy
+  mcpo-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - BACKEND_API_URL=http://backend:8001
+      - MCPO_PORT=8002
+      - MCPO_API_KEY=task-management-secret
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - mcpo_network
+    volumes:
+      - ./config:/opt/config
+    command: >
+      python setup_mcpo.py 
+      --port 8002 
+      --backend-url http://backend:8001 
+      --api-key task-management-secret
+      --mode config
+
+volumes:
+  backend_data:
+
+networks:
+  mcpo_network:
+    driver: bridge

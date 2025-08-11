@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # 1. Backend API - Core business logic and data management
+  backend:
+    container_name: backend
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./apps/backend:/app
+      - backend-data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=sqlite:////app/data/tasks.db
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 2. MCP Server - Standalone MCP server that connects to backend API
+  mcp-server:
+    container_name: mcp-server
+    build:
+      context: ./apps/mcp-server
+      dockerfile: Dockerfile
+    volumes:
+      - ./apps/mcp-server:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - BACKEND_API_URL=http://backend:8001
+      - MCP_SERVER_HOST=0.0.0.0
+      - MCP_SERVER_PORT=9000
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - mcp-network
+    stdin_open: true
+    tty: true
+    command: ["python", "server.py"]
+
+  # 3. MCP Bridge - Contains MCP Client + HTTP Server
+  # Architecture: HTTP -> (MCP Client -> MCP Server) -> Backend
+  mcp-bridge:
+    container_name: mcp-bridge
+    build:
+      context: ./apps/mcp-proxy
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/mcp-proxy:/app
+      - ./apps/mcp-server:/mcp-server:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HTTP_PORT=8000
+      - MCP_SERVER_HOST=mcp-server
+      - MCP_SERVER_PORT=9000
+    depends_on:
+      - mcp-server
+    networks:
+      - mcp-network
+    command: ["python", "mcp_bridge.py"]
+
+  # 4. Frontend React Application
+  frontend:
+    container_name: frontend
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/frontend:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_MCP_BRIDGE_URL=http://localhost:8000/api
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - mcp-bridge
+    networks:
+      - mcp-network
+
+volumes:
+  backend-data:
+    driver: local
+
+networks:
+  mcp-network:
+    driver: bridge
