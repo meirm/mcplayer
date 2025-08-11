@@ -2,6 +2,9 @@
 
 A unified MCP (Model Context Protocol) architecture implementation that provides task management capabilities for both web frontends and AI agents through a single backend system. This project demonstrates how to build AI-native applications that treat AI agents and traditional UIs as equal citizens.
 
+![MCP Task Management System – POC Frontend](poc_frontend.png)
+
+
 **Author:** Meir Michanie (meirm@cyborg.fi)  
 **Developed with:** Claude AI assistance for architecture design and implementation
 
